@@ -1,0 +1,57 @@
+ no claim that any of this is original code
+# lifted in learning exercises over time
+# the RStudio editor will code fold the examples below
+
+# Read Excel, Manipulate Rows/Columns, Write Excel ------------------------------------------------
+
+library(dplyr)
+library(readxl)
+library(writexl)
+library(lubridate)
+library(stringr)
+
+XLSX_FILE <- "Planets"
+
+planets <- read_excel(paste0(XLSX_FILE,".xlsx"), sheet = "List of Planets")
+
+# add a column with the row number
+planets <- mutate(planets, RowNum = row_number())
+
+# move RowNum column to the far left
+planets <- select(planets, RowNum, everything())
+
+# rename a column
+names(planets)[names(planets) == 'RowNum'] <- 'Row Number'
+
+# a good way to rename lots of columns
+# omitting a column will remove it
+planets <- rename(planets,
+                  RowNum = "Row Number",
+                  Planet = Planet,
+                  Distance = "Distance (AU)",
+                  Revolution = Revolution,
+                  Rotation = Rotation,
+                  Mass = Mass,
+                  Diameter = Diameter,
+                  Satellites = Satellites)
+
+# remove RowNum column
+planets <- subset(planets, select = -c(RowNum))
+
+# remove the Uranus row
+planets <- filter(planets, Planet != "Uranus")
+
+# getting and setting a valume in a dataframe
+saturn_mass <- as.numeric(planets[which(planets$Planet == "Saturn"), "Mass"])
+planets[which(planets$Planet == "Saturn"), "Mass"] <- saturn_mass
+
+# create Excel filename with date/time stamp at the end
+filename <- paste(XLSX_FILE, now())
+# remove the seconds and replace the colon in now()
+filename <- str_sub(str_replace_all(filename,":",""),-100,-3)
+filename <- paste0(filename,".xlsx")
+
+# can save multiple worksheets
+worksheets <- list("List of Planets" = planets,
+                   "Copy of List of Planets" = planets)
+tmp <- writexl::write_xlsx(worksheets, filename)
